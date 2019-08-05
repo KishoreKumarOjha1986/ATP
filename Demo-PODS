@@ -2,3 +2,30 @@ kubectl run nginx --image=nginx
 kubectl get pods
 kubectl describe pods
 kubectl get pods -o wide
+------------
+
+pod-definition.yml :
+
+apiVersion: v1
+kind: Pod
+metadata:
+	name: myapp-pod
+	labels: 
+    app: myapp
+    type: front-end
+spec:
+	containers:
+		- name: nginx-container
+		  image: nginx
+      
+Command to run in master node- 
+root@ip-10-0-130-192:~# kubectl create -f pod-defination.yml
+pod/myapp-pod created
+root@ip-10-0-130-192:~# kubectl get pods
+NAME        READY   STATUS    RESTARTS   AGE
+myapp-pod   1/1     Running   0          21s
+
+root@ip-10-0-130-192:~# kubectl describe pod myapp-pod 
+
+
+          
