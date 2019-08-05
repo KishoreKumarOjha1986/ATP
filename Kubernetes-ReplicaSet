@@ -103,3 +103,13 @@ myapp-replicaset-cgzxw   1/1     Running   0          96s
 myapp-replicaset-lqpl7   1/1     Running   0          96s
 myapp-replicaset-sw9dz   1/1     Running   0          9m27s
 myapp-replicaset-wt5hb   1/1     Running   0          9m27s
+
+
+
+root@ip-10-0-130-192:~# kubectl delete replicaset myapp-replicaset
+replicaset.extensions "myapp-replicaset" deleted
+root@ip-10-0-130-192:~# kubectl get pods
+NAME                     READY   STATUS        RESTARTS   AGE
+myapp-replicaset-cgzxw   0/1     Terminating   0          6m3s
+myapp-replicaset-lqpl7   0/1     Terminating   0          6m3s
+myapp-replicaset-sw9dz   0/1     Terminating   0          13m
