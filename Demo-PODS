@@ -2,4 +2,3 @@ kubectl run nginx --image=nginx
 kubectl get pods
 kubectl describe pods
 kubectl get pods -o wide
-
