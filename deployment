@@ -1,0 +1,80 @@
+root@ip-10-0-130-192:~# cp -rvf replicaset-definition.yml deployment-definition.yml
+'replicaset-definition.yml' -> 'deployment-definition.yml'
+
+Edit the same file as below:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: myapp
+    type: front-end
+  name: myapp-replicaset
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+        type: front-end
+      name: myapp-pod
+    spec:
+      containers:
+        - image: nginx
+          name: nginx-container
+          
+  root@ip-10-0-130-192:~# kubectl get all
+NAME                                    READY   STATUS    RESTARTS   AGE
+pod/myapp-replicaset-754fdd945d-5nbb8   1/1     Running   0          18s
+pod/myapp-replicaset-754fdd945d-c964f   1/1     Running   0          18s
+pod/myapp-replicaset-754fdd945d-m7vgf   1/1     Running   0          18s
+pod/myapp-replicaset-754fdd945d-nx7xg   1/1     Running   0          18s
+pod/myapp-replicaset-754fdd945d-vv4vp   1/1     Running   0          18s
+
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   82m
+
+
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/myapp-replicaset   5/5     5            5           18s
+
+NAME                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/myapp-replicaset-754fdd945d   5         5         5       18s
+
+root@ip-10-0-130-192:~# kubectl describe deployment
+Name:                   myapp-replicaset
+Namespace:              default
+CreationTimestamp:      Mon, 05 Aug 2019 15:06:42 +0000
+Labels:                 app=myapp
+                        type=front-end
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=myapp
+Replicas:               5 desired | 5 updated | 5 total | 5 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=myapp
+           type=front-end
+  Containers:
+   nginx-container:
+    Image:        nginx
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   myapp-replicaset-754fdd945d (5/5 replicas created)
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  2m6s  deployment-controller  Scaled up replica set myapp-replicaset-754fdd945d to 5
