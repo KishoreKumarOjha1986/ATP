@@ -1,0 +1,133 @@
+Deployment that launches two nginx containers. Also, a NodePort service with TCP—30080 exposed:
+
+# cat 3-1-1_deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service : nginx
+  template:
+    metadata:
+      labels:
+        service : nginx
+    spec:
+      containers:
+        - name: my-container
+          image: nginx
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-nginx
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      nodePort: 30080
+  type: NodePort
+  selector:
+    service: nginx
+
+root@ip-10-0-137-241:~# kubectl create -f 3-1-1_deployment.yaml
+deployment.apps/my-nginx created
+service/my-nginx created
+
+
+root@ip-10-0-137-241:~# kubectl get pods
+NAME                        READY   STATUS    RESTARTS   AGE
+my-nginx-5646bd5b69-lhwvw   1/1     Running   0          2m18s
+my-nginx-5646bd5b69-m7zr9   1/1     Running   0          2m18s
+
+
+root@ip-10-0-137-241:~# kubectl get services
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        71m
+my-nginx     NodePort    10.100.220.191   <none>        80:30080/TCP   2m42s
+
+
+Scalling up and down:
+Manually:
+root@ip-10-0-137-241:~# kubectl scale --replicas=4 deployment my-nginx
+deployment.extensions/my-nginx scaled
+root@ip-10-0-137-241:~# kubectl get pods
+NAME                        READY   STATUS    RESTARTS   AGE
+my-nginx-5646bd5b69-bbrpx   1/1     Running   0          9s
+my-nginx-5646bd5b69-bsp7f   1/1     Running   0          9s
+my-nginx-5646bd5b69-lhwvw   1/1     Running   0          5m45s
+my-nginx-5646bd5b69-m7zr9   1/1     Running   0          5m45s
+
+
+Kubectl scale (also kubectl autoscale!) supports Replication Controller (RC) and Replica Set (RS), too.
+However, deployment is the recommended way to deploy Pods
+
+
+root@ip-10-0-137-241:~# kubectl scale --replicas=2 deployment my-nginx
+deployment.extensions/my-nginx scaled
+root@ip-10-0-137-241:~# kubectl get pods
+NAME                        READY   STATUS    RESTARTS   AGE
+my-nginx-5646bd5b69-lhwvw   1/1     Running   0          7m48s
+my-nginx-5646bd5b69-m7zr9   1/1     Running   0          7m48s
+
+
+root@ip-10-0-137-241:~# kubectl scale --current-replicas=3 --replicas=4 deployment my-nginx
+error: Expected replicas to be 3, was 2
+
+root@ip-10-0-137-241:~# kubectl scale --current-replicas=2 --replicas=4 deployment my-nginx
+deployment.extensions/my-nginx scaled
+
+
+HPA (Horizontal Pod Autoscaler)
+An HPA queries the source of metrics periodically and determines whether scaling is required by a controller based on the metrics it gets
+There are two types of metrics that could be fetched; one is from Heapster (https://github.com/kubernetes/heapster), another is from RESTful client access. In the following example, we'll show you how to use Heapster to monitor Pods and expose the metrics to an HPA
+
+Firstly Heapster has to be deployed in the cluster
+root@ip-10-0-137-241:~# kubectl create -f https://raw.githubusercontent.com/kubernetes/kops/master/addons/monitoring-standalone/v1.7.0.yaml
+deployment.extensions/heapster created
+service/heapster created
+serviceaccount/heapster created
+clusterrolebinding.rbac.authorization.k8s.io/heapster created
+role.rbac.authorization.k8s.io/system:pod-nanny created
+rolebinding.rbac.authorization.k8s.io/heapster-binding created
+
+
+root@ip-10-0-137-241:~# kubectl get pods --all-namespaces | grep heapster
+kube-system   heapster-786f5c99b6-k6vlp                  2/2     Running   0          86s
+
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-nginx
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: my-nginx
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 50
+  
+root@ip-10-0-137-241:~# kubectl autoscale deployment my-nginx --cpu-percent=50 --min=2 --max=5
+horizontalpodautoscaler.autoscaling/my-nginx autoscaled
+
+
+root@ip-10-0-137-241:~# kubectl get hpa
+NAME       REFERENCE             TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+my-nginx   Deployment/my-nginx   <unknown>/50%   2         5         2          53s
+
+
+root@ip-10-0-137-241:~# kubectl describe hpa my-nginx
+Name:                                                  my-nginx
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Sat, 17 Aug 2019 08:25:16 +0000
+Reference:                                             Deployment/my-nginx
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  <unknown> / 50%
+Min replicas:                                          2
+Max replicas:                                          5
+Deployment pods:                                       2 current / 0 desired
+
