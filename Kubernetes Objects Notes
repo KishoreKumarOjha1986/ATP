@@ -6,3 +6,38 @@ A pod is the most basic unit of the Kubernetes cluster. It usually contains one 
 Pods are designed to be ephemeral in nature which means that they can be destroyed at any time. 
 Containers in a pod share the same network, storage, and lifecycle. 
 What this means is that they can communicate with each other directly, and will both be stopped and started at the same time.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: first-pod
+  labels:
+    name: first-pod
+    app: hello-world-app
+spec:
+  containers:
+  - image: hello-world
+    name: first-pod
+    ports:
+    - containerPort: 8080
+      protocol: TCP
+      
+Let’s break down and try to understand the pod definition we just created.
+
+- apiVersion: This refers to the version of Kubernetes. There are several versions, and several objects are introduced with each version. 
+Some common ones are v1, apps/v1, and extensions/v1beta1. You can check out the official Kubernetes documentation for the list of versions.
+
+- Kind: This is the type of Kubernetes object. In this case (the example above), we’re creating a pod.
+
+- Metadata: The metadata houses information that describes the object briefly. 
+The information in the metadata usually contains the name you want to give the object (pod in our case), the labels, and the annotation. 
+For the labels, you can define as many labels as you want, and you aren’t restricted to words to use as labels.
+
+- Spec: The spec section is where you define the desired state of your object. In the case of a pod, it’s where you describe the state of your container. 
+Some options you can specify in the spec section are:
+
+Container: Here you specify:
+The image of the application you want to run in your pods.
+The name of the container that you’ll run in your pod.
+The ports: containerPort is the port your application in your container is listening to.
+Now, let’s create a pod with the pod definition:
