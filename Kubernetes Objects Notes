@@ -1,0 +1,8 @@
+What Are Kubernetes Objects?
+Kubernetes objects are entities provided by Kubernetes for deploying, maintaining, and scaling applications either on cloud or on-premise infrastructure.
+
+Pods:
+A pod is the most basic unit of the Kubernetes cluster. It usually contains one or more running containers. 
+Pods are designed to be ephemeral in nature which means that they can be destroyed at any time. 
+Containers in a pod share the same network, storage, and lifecycle. 
+What this means is that they can communicate with each other directly, and will both be stopped and started at the same time.
